@@ -187,9 +187,20 @@ def compare(a: list[float], b: list[float], name_a: str = "A", name_b: str = "B"
 
 
 def format_comparison(r: ComparisonResult) -> str:
-    """The headline: 'Model B wins by 3.2% ± 1.1% (p<0.05)'."""
-    pct = r.delta * 100
-    half_width = (r.delta_ci[1] - r.delta_ci[0]) / 2 * 100
+    """The headline: 'Model B wins by 3.2% ± 1.1% (p<0.05)'.
+
+    Percent mode is used when the metric is a rate/proportion (0..1 scale);
+    absolute mode when the metric is already in real units (tok/s, ms, $).
+    Heuristic: if both means are <= 10, treat as a rate and express the delta
+    as a percentage of the baseline; otherwise report raw units.
+    """
+    is_rate = abs(r.metric_a) <= 10 and abs(r.metric_b) <= 10
+    if is_rate and r.metric_a != 0:
+        pct = (r.delta / abs(r.metric_a)) * 100
+        half_width = (r.delta_ci[1] - r.delta_ci[0]) / 2 / abs(r.metric_a) * 100
+    else:
+        pct = r.delta
+        half_width = (r.delta_ci[1] - r.delta_ci[0]) / 2
     winner = r.name_b if r.delta > 0 else r.name_a
     p_str = f"p<{1 - r.ci_level:.2f}" if r.p_value < (1 - r.ci_level) else f"p={r.p_value:.3f}"
     if abs(r.delta) < 1e-12:
