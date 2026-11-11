@@ -71,3 +71,15 @@ python -m pytest tests/ -q   # 24 tests
 ```
 
 The test suite encodes the core claim: **a small delta on a tiny sample must never be called a win** (`test_tiny_sample_is_noise`).
+
+## Docker
+
+Multi-stage build on `python:3.12-slim` (stdlib only — no dependencies to install).
+
+```bash
+docker build -t statsheet .
+docker run statsheet                                        # usage
+docker run -v $PWD:/data statsheet compare /data/a.jsonl /data/b.jsonl
+```
+
+CI runs a multi-arch (`linux/amd64`, `linux/arm64`) buildx smoke on every push/PR.
